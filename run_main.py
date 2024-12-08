@@ -2,8 +2,15 @@ import streamlit as st
 import pandas as pd
 import plot_chart
 from datetime import datetime
+from sqlalchemy import create_engine
 
+def update_db(record):
+    # Connect to the database (example: SQLite)
+    df_temp=pd.DataFrame([record])
+    df_temp["ILevel"] = df_temp["ILevel"].apply(lambda x: ",".join(x) if isinstance(x, list) else x)
 
+    # Append data to the 'users' table
+    df_temp.to_sql('users', con=engine, if_exists='append', index=False)
 
 #list of Market direction
 market_dir ={
@@ -11,6 +18,7 @@ market_dir ={
     f'price > CPR',
     f'price > VWAP'
     }
+engine = create_engine('sqlite:///example.db')  # Replace with your DB connection string
 market_dir_vars = {}
 for item in market_dir:
     market_dir_vars[item] = st.checkbox(item, key=item)
@@ -25,7 +33,7 @@ elif (market_dir_vars['price > EMA(50,200)']==False and market_dir_vars['price >
     
 else:
     market_phase="Reversal phase !"
-    market_img='pig.jpg'
+    market_img='c:/users/mahe/.spyder-py3/pig.jpg'
 st.markdown(f"<h1 style='color: #FF6347;'>{market_phase}</h1>", unsafe_allow_html=True)
 st.image(market_img, width=200)
 
@@ -141,6 +149,7 @@ if st.session_state.calculated_row:
         if st.button("Go Ahead"):
             # Append the result to session state
             st.session_state.result_data.append(result_row)
+            update_db(result_row)
             st.session_state.calculated_row = None  # Clear the calculated row after adding
             st.success("Result added to the table!")
     else:
@@ -151,7 +160,6 @@ st.write("### Results Table")
 if st.session_state.result_data:
     st.session_state.df_table = pd.DataFrame(st.session_state.result_data)
     st.session_state.df_table.index += 1 
-    
     # Define a function to apply conditional formatting
     def highlight_no(val):
         color = 'background-color: red' if val == "No" else ''
@@ -201,3 +209,14 @@ if st.button("Export to Excel"):
         st.download_button("Download Excel", file_path, file_name="condition_check_results.xlsx")
     else:
         st.warning("No results to export. Please calculate the score first.")
+
+if st.button("show from database"):
+    query = "SELECT * FROM users"  # Replace 'users' with your table name
+    df_db = pd.read_sql(query, con=engine)
+
+    # Display the data in Streamlit
+    st.title("Database Table")
+    if not df_db.empty:
+        st.dataframe(df_db)
+    else:
+        st.write("The table is empty or does not exist.")
