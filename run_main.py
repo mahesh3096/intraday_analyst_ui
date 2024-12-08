@@ -25,7 +25,7 @@ elif (market_dir_vars['price > EMA(50,200)']==False and market_dir_vars['price >
     
 else:
     market_phase="Reversal phase !"
-    market_img='c:/users/mahe/.spyder-py3/pig.jpg'
+    market_img='pig.jpg'
 st.markdown(f"<h1 style='color: #FF6347;'>{market_phase}</h1>", unsafe_allow_html=True)
 st.image(market_img, width=200)
 
